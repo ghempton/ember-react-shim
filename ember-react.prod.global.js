@@ -3,7 +3,7 @@
  * @copyright Copyright 2014 Gordon L. Hempton and contributors
  * @license   Licensed under ISC license
  *            See https://raw.github.com/ghempton/ember-react/master/LICENSE
- * @version   0.0.1
+ * @version   0.0.2
  */
 (function() {
 var define, requireModule, require, requirejs;
@@ -152,7 +152,13 @@ define("ember-react/component", ["exports"], function(__exports__) {
       props.model = props.model || get(controller, 'model');
       
       var descriptor = React.withContext(context, function() {
-        return reactClass(this._props);
+        if(React.isValidClass(reactClass)) {
+          return reactClass(this._props);
+        } else if(React.isValidComponent(reactClass)) {
+          return reactClass;
+        } else {
+          throw new Ember.Error("Invalid react component or class");
+        }
       }.bind(this));
       
       this._reactComponent = React.renderComponent(descriptor, el);
@@ -376,7 +382,7 @@ define(
       name: "ember-react",
       
       initialize: function(container, application) {
-        Ember.Handlebars.helper('react', ReactHelper);
+        Ember.Handlebars.registerHelper('react', ReactHelper);
         //container.register('helper:react', ReactHelper);
         //container.register('component:react', ReactComponent);
         

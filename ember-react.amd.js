@@ -3,7 +3,7 @@
  * @copyright Copyright 2014 Gordon L. Hempton and contributors
  * @license   Licensed under ISC license
  *            See https://raw.github.com/ghempton/ember-react/master/LICENSE
- * @version   0.0.2
+ * @version   0.0.3
  */
 define("ember-react/component", ["exports"], function(__exports__) {
   "use strict";
@@ -25,16 +25,16 @@ define("ember-react/component", ["exports"], function(__exports__) {
   */
   var ReactComponent = Ember.Component.extend({
     
-    name: null,
+    _name: null,
     _props: null,
     _reactComponent: null,
     
     reactClass: Ember.computed(function() {
       var container = get(this, 'container'),
-          name = get(this, 'name');
+          name = get(this, '_name');
           
       return container.lookupFactory('react:' + name);
-    }).property('name'),
+    }).property('_name'),
     
     buildReactContext: function() {
       var container = get(this, 'container'),
@@ -219,7 +219,7 @@ define(
 
     var helper = function(name, options) {
       var hash = options.hash;
-      hash.name = name;
+      hash._name = name;
       return EmberHandlebars.helpers.view.call(this, ReactComponent, options);
     };
 

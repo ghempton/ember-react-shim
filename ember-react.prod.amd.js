@@ -3,7 +3,7 @@
  * @copyright Copyright 2014 Gordon L. Hempton and contributors
  * @license   Licensed under ISC license
  *            See https://raw.github.com/ghempton/ember-react/master/LICENSE
- * @version   0.0.3
+ * @version   0.0.4
  */
 define("ember-react/component", ["exports"], function(__exports__) {
   "use strict";
@@ -153,7 +153,7 @@ define("ember-react/ember-link", ["exports"], function(__exports__) {
       }
     },
     render: function() {
-      return React.DOM.a({href: this.getHref(), onClick: this.handleClick}, this.props.children) 
+      return React.DOM.a({className: this.props.className, href: this.getHref(), onClick: this.handleClick}, this.props.children) 
     }
   }));
 });

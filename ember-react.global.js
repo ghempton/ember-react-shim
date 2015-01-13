@@ -3,7 +3,7 @@
  * @copyright Copyright 2014 Gordon L. Hempton and contributors
  * @license   Licensed under ISC license
  *            See https://raw.github.com/ghempton/ember-react/master/LICENSE
- * @version   0.0.5
+ * @version   0.0.6
  */
 (function() {
 var define, requireModule, require, requirejs;
@@ -218,6 +218,9 @@ define("ember-react/ember-link", ["exports"], function(__exports__) {
       queryParams: React.PropTypes.object
     },
     getRouterArgs: function() {
+      if(Ember.isEmpty(this.props.to))
+        return [];
+
       var args, context;
       args = [this.props.to];
       context = this.props.context || this.props.params;
@@ -236,9 +239,13 @@ define("ember-react/ember-link", ["exports"], function(__exports__) {
       return args;
     },
     getHref: function() {
+      var args = this.getRouterArgs();
+      if(Ember.isEmpty(args))
+        return null;
+
       var router;
       router = this.context.container.lookup('router:main');
-      return router.generate.apply(router, this.getRouterArgs());
+      return router.generate.apply(router, args);
     },
     handleClick: function(e) {
       var router;

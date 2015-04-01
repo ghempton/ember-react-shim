@@ -3,7 +3,7 @@
  * @copyright Copyright 2014 Gordon L. Hempton and contributors
  * @license   Licensed under ISC license
  *            See https://raw.github.com/ghempton/ember-react/master/LICENSE
- * @version   0.0.6
+ * @version   0.1.0
  */
 (function() {
 var define, requireModule, require, requirejs;
@@ -109,74 +109,79 @@ define("ember-react/component", ["exports"], function(__exports__) {
   }
 
   var get = Ember.get;
+
   /**
     Renders a React component with the passed in options hash
     set as props.
-    
+
     Usage:
-    
+
     ```handlebars
       {{react 'my-component' value=value onChange=valueChanged}}
     ```
   */
   var ReactComponent = Ember.Component.extend({
-    
-    _name: null,
+
     _props: null,
     _reactComponent: null,
-    
+    componentName: null,
+    tagName: 'div',
+
+    // These cannot be unknown properties or else: https://github.com/emberjs/ember.js/issues/10400
+    helperName: null,
+    _morph: null,
+    renderer: null,
+
     reactClass: Ember.computed(function() {
       var container = get(this, 'container'),
-          name = get(this, '_name');
-          
+          name = get(this, 'componentName');
+
       return container.lookupFactory('react:' + name);
-    }).property('_name'),
-    
+    }).property('componentName'),
+
     buildReactContext: function() {
       var container = get(this, 'container'),
           controller = get(this, 'controller');
-      
+
       return {
         container: container,
         controller: controller
       };
     },
-    
+
     renderReact: function() {
       var el = get(this, 'element'),
           reactClass = get(this, 'reactClass'),
           controller = get(this, 'controller'),
           context = this.buildReactContext();
-      
-      var props = this._props;
+
+      var props = this._props || {};
       props.model = props.model || get(controller, 'model');
-      
+
       var descriptor = React.withContext(context, function() {
-        if(React.isValidClass(reactClass)) {
-          return reactClass(this._props);
-        } else if(React.isValidComponent(reactClass)) {
+        if(React.isValidElement(reactClass)) {
           return reactClass;
         } else {
-          throw new Ember.Error("Invalid react component or class");
+          return React.createElement(reactClass, this._props);
         }
       }.bind(this));
-      
-      this._reactComponent = React.renderComponent(descriptor, el);
+
+      this._reactComponent = React.render(descriptor, el);
     },
-    
+
     didInsertElement: function() {
       this.renderReact();
     },
-    
+
     willDestroyElement: function() {
       var el = get(this, 'element');
       React.unmountComponentAtNode(el);
     },
-    
+
     unknownProperty: function(key) {
-      return this._props[key];
+      return this._props && this._props[key];
     },
-    
+
     setUnknownProperty: function(key, value) {
       var reactComponent = this._reactComponent;
       if(!this._props) {
@@ -190,7 +195,7 @@ define("ember-react/component", ["exports"], function(__exports__) {
       }
       return value;
     }
-    
+
   });
 
   __es6_export__("default", ReactComponent);
@@ -256,7 +261,7 @@ define("ember-react/ember-link", ["exports"], function(__exports__) {
       }
     },
     render: function() {
-      return React.DOM.a({className: this.props.className, href: this.getHref(), onClick: this.handleClick}, this.props.children) 
+      return React.createElement("a", {className: this.props.className, href: this.getHref(), onClick: this.handleClick}, this.props.children)
     }
   }));
 });
@@ -306,38 +311,11 @@ define(
 
 //# sourceMappingURL=route.js.map
 define(
-  "ember-react/helper",
-  ["./component", "exports"],
-  function(ember$react$component$$, __exports__) {
-    "use strict";
-
-    function __es6_export__(name, value) {
-      __exports__[name] = value;
-    }
-
-    var ReactComponent;
-    ReactComponent = ember$react$component$$["default"];
-
-    var EmberHandlebars = Ember.Handlebars;
-
-    var helper = function(name, options) {
-      var hash = options.hash;
-      hash._name = name;
-      return EmberHandlebars.helpers.view.call(this, ReactComponent, options);
-    };
-
-    __es6_export__("default", helper);
-  }
-);
-
-//# sourceMappingURL=helper.js.map
-define(
   "ember-react/index",
-  ["./ember-link", "./component", "./helper", "./initializer", "./ext/route", "exports"],
+  ["./ember-link", "./component", "./initializer", "./ext/route", "exports"],
   function(
     ember$react$ember$link$$,
     ember$react$component$$,
-    ember$react$helper$$,
     ember$react$initializer$$,
     ember$react$ext$route$$,
     __exports__) {
@@ -351,15 +329,12 @@ define(
     EmberLink = ember$react$ember$link$$["default"];
     var ReactComponent;
     ReactComponent = ember$react$component$$["default"];
-    var ReactHelper;
-    ReactHelper = ember$react$helper$$["default"];
     var initializer;
     initializer = ember$react$initializer$$["default"];
 
     var EmberReact = {
       EmberLink: EmberLink,
       ReactComponent: ReactComponent,
-      ReactHelper: ReactHelper,
       initializer: initializer
     };
 
@@ -372,28 +347,26 @@ define(
 //# sourceMappingURL=index.js.map
 define(
   "ember-react/initializer",
-  ["./helper", "./component", "exports"],
-  function(ember$react$helper$$, ember$react$component$$, __exports__) {
+  ["./component", "exports"],
+  function(ember$react$component$$, __exports__) {
     "use strict";
 
     function __es6_export__(name, value) {
       __exports__[name] = value;
     }
 
-    var ReactHelper;
-    ReactHelper = ember$react$helper$$["default"];
     var ReactComponent;
     ReactComponent = ember$react$component$$["default"];
 
     __es6_export__("default", {
       name: "ember-react",
-      
+
       initialize: function(container, application) {
-        Ember.Handlebars.registerHelper('react', ReactHelper);
+        Ember.Handlebars.registerHelper('react', Ember.Handlebars.makeViewHelper(ReactComponent));
         //container.register('helper:react', ReactHelper);
         //container.register('component:react', ReactComponent);
-        
-        //TODO: better way to add this?   
+
+        //TODO: better way to add this?
         container.resolver.__resolver__.get('moduleNameLookupPatterns').push(function(parsedName) {
           if(parsedName.type === 'react') {
             return application.modulePrefix + '/react/' + parsedName.fullNameWithoutType;

@@ -3,7 +3,7 @@
  * @copyright Copyright 2014 Gordon L. Hempton and contributors
  * @license   Licensed under ISC license
  *            See https://raw.github.com/ghempton/ember-react/master/LICENSE
- * @version   0.1.0
+ * @version   0.1.1
  */
 define("ember-react/component", ["exports"], function(__exports__) {
   "use strict";
@@ -35,7 +35,7 @@ define("ember-react/component", ["exports"], function(__exports__) {
     helperName: null,
     _morph: null,
     renderer: null,
-
+    
     reactClass: Ember.computed(function() {
       var container = get(this, 'container'),
           name = get(this, 'componentName');
@@ -62,13 +62,10 @@ define("ember-react/component", ["exports"], function(__exports__) {
       var props = this._props || {};
       props.model = props.model || get(controller, 'model');
 
-      var descriptor = React.withContext(context, function() {
-        if(React.isValidElement(reactClass)) {
-          return reactClass;
-        } else {
-          return React.createElement(reactClass, this._props);
-        }
-      }.bind(this));
+      var descriptor = React.createElement(
+        ContextWrapper(context, reactClass),
+        this._props
+      );
 
       this._reactComponent = React.render(descriptor, el);
     },
@@ -101,6 +98,30 @@ define("ember-react/component", ["exports"], function(__exports__) {
     }
 
   });
+
+  function ContextWrapper(context, Component) {
+    
+    var contextTypes = {};
+    for(var key in context) {
+      if(!context.hasOwnProperty(key)) continue;
+      contextTypes[key] = React.PropTypes.any;
+    }
+    
+    return React.createClass({
+      
+      childContextTypes: contextTypes,
+      
+      getChildContext: function() {
+        return context;
+      },
+      
+      render: function() {
+        return React.createElement(Component, React.__spread({},  this.props));
+      }
+      
+    });
+      
+  }
 
   __es6_export__("default", ReactComponent);
 });
